@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>আমার খাতা</title>
+<link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#eef1f6;--sf:#fff;--tx:#1c2433;--mu:#66708a;--ln:#d9dfeb;--ac:#2f4bd6;--acx:#fff;--gn:#12805c;--rd:#c23a3a;color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#10141f;--sf:#192032;--tx:#e8ecf6;--mu:#97a1ba;--ln:#2b3550;--ac:#7f95ff;--acx:#10141f;--gn:#4fd1a1;--rd:#ff8a8a;color-scheme:dark}}
+:root[data-theme="dark"]{--bg:#10141f;--sf:#192032;--tx:#e8ecf6;--mu:#97a1ba;--ln:#2b3550;--ac:#7f95ff;--acx:#10141f;--gn:#4fd1a1;--rd:#ff8a8a;color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--tx);font:16px/1.6 "Hind Siliguri",system-ui,sans-serif}
+.w{max-width:960px;margin:0 auto;padding:16px}
+h1{font-size:26px;margin:4px 0 12px;font-weight:700}
+nav{display:flex;gap:6px;overflow-x:auto;padding-bottom:6px}
+nav button{flex:none;border:1px solid var(--ln);background:var(--sf);color:var(--tx);padding:8px 16px;border-radius:999px;font:inherit;cursor:pointer}
+nav button.on{background:var(--ac);color:var(--acx);border-color:var(--ac);font-weight:600}
+.bar{display:flex;gap:8px;margin:14px 0;flex-wrap:wrap}
+input,select,textarea{font:inherit;color:var(--tx);background:var(--sf);border:1px solid var(--ln);border-radius:8px;padding:8px 10px;width:100%}
+.bar input{flex:1;min-width:160px}
+button.b{background:var(--ac);color:var(--acx);border:0;border-radius:8px;padding:8px 16px;font:inherit;font-weight:600;cursor:pointer}
+button.g{background:transparent;color:var(--mu);border:1px solid var(--ln);border-radius:8px;padding:6px 12px;font:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:2px solid var(--ac);outline-offset:2px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px}
+.card{background:var(--sf);border:1px solid var(--ln);border-radius:10px;padding:14px;display:flex;flex-direction:column;gap:6px}
+.card h3{margin:0;font-size:18px}
+.card img{width:100%;height:150px;object-fit:cover;border-radius:6px}
+.mu{color:var(--mu);font-size:14px}
+.body{white-space:pre-wrap;font-size:15px;max-height:7.5em;overflow:hidden}
+.act{display:flex;gap:6px;margin-top:auto;padding-top:6px}
+.sum{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
+.sum div{background:var(--sf);border:1px solid var(--ln);border-radius:10px;padding:10px 12px}
+.sum b{display:block;font-size:22px}
+.in{color:var(--gn)}.out{color:var(--rd)}
+.tbl{overflow-x:auto}
+table{width:100%;border-collapse:collapse;background:var(--sf);border:1px solid var(--ln);border-radius:10px}
+th,td{padding:8px 10px;text-align:left;border-bottom:1px solid var(--ln);white-space:nowrap}
+td.n{text-align:right;font-weight:600}
+dialog{border:1px solid var(--ln);border-radius:12px;background:var(--sf);color:var(--tx);width:min(520px,94vw);padding:18px}
+dialog::backdrop{background:#0008}
+label{display:block;margin:10px 0 2px;font-size:14px;color:var(--mu)}
+.empty{padding:36px 12px;text-align:center;color:var(--mu)}
+.foot{margin-top:28px;display:flex;gap:8px;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<div class="w">
+<h1>আমার খাতা</h1>
+<nav id="nav"></nav>
+<div class="bar"><input id="q" type="search" placeholder="খুঁজুন…"><select id="f" style="width:auto"></select><button class="b" id="add">+ নতুন যোগ করুন</button></div>
+<div id="sum"></div>
+<div id="list"></div>
+<div class="foot"><button class="g" id="exp">ব্যাকআপ নামান (JSON)</button><button class="g" id="imp">ব্যাকআপ থেকে ফিরিয়ে আনুন</button><input id="file" type="file" accept=".json" hidden></div>
+<p class="mu">ডাটা শুধু এই ব্রাউজারে সেভ থাকে। নিয়মিত ব্যাকআপ নামিয়ে রাখুন।</p>
+</div>
+<dialog id="dlg"><form method="dialog" id="frm"></form></dialog>
+<script>
+const S={
+ notes:{t:"একাডেমিক নোট",f:[["title","শিরোনাম"],["semester","সেমিস্টার (যেমন: ৩য়)"],["course","কোর্স/বিষয়"],["date","তারিখ","date"],["body","নোট","area"]],g:"semester"},
+ writing:{t:"লেখালেখি",f:[["title","শিরোনাম"],["topic","বিষয়"],["status","অবস্থা","sel",["খসড়া","চলছে","প্রকাশিত"]],["date","তারিখ","date"],["body","লেখা","area"]],g:"topic"},
+ design:{t:"গ্রাফিক ডিজাইন",f:[["title","কাজের নাম"],["client","ক্লায়েন্ট/প্রজেক্ট"],["tool","টুল (Photoshop, Illustrator…)"],["status","অবস্থা","sel",["চলছে","শেষ","ডেলিভারি দেওয়া"]],["link","লিংক"],["image","ছবি (প্রিভিউ)","img"],["body","নোট","area"]],g:"status"},
+ money:{t:"হিসাব",f:[["type","ধরন","sel",["পেলাম","খরচ"]],["amount","টাকা","num"],["category","খাত (খাবার, বাসা ভাড়া, বই…)"],["date","তারিখ","date"],["body","বিবরণ"]],g:"category"}
+};
+let D={notes:[],writing:[],design:[],money:[]},tab="notes",edit=null;
+try{const r=localStorage.getItem("amar-khata");if(r)D=Object.assign(D,JSON.parse(r))}catch(e){}
+const $=id=>document.getElementById(id);
+const save=()=>{try{localStorage.setItem("amar-khata",JSON.stringify(D))}catch(e){alert("সেভ করা যায়নি। ছবি ছোট করুন বা ব্যাকআপ নামান।")}};
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const bn=n=>Number(n||0).toLocaleString("bn-BD");
+const today=()=>new Date().toISOString().slice(0,10);
+function nav(){$("nav").innerHTML=Object.keys(S).map(k=>`<button class="${k==tab?"on":""}" data-t="${k}">${S[k].t} (${bn(D[k].length)})</button>`).join("")}
+function render(){
+ nav();const s=S[tab],q=$("q").value.trim().toLowerCase();
+ const gs=[...new Set(D[tab].map(x=>x[s.g]).filter(Boolean))];
+ const cur=$("f").value;
+ $("f").innerHTML=`<option value="">সব ${s.f.find(f=>f[0]==s.g)[1].split(" ")[0]}</option>`+gs.map(g=>`<option ${g==cur?"selected":""}>${esc(g)}</option>`).join("");
+ let rows=D[tab].filter(x=>(!$("f").value||x[s.g]==$("f").value)&&(!q||JSON.stringify(x).toLowerCase().includes(q)));
+ rows.sort((a,b)=>(b.date||"").localeCompare(a.date||"")||b.id-a.id);
+ $("sum").innerHTML="";
+ if(tab=="money"){
+  const all=D.money,inn=all.filter(x=>x.type=="পেলাম").reduce((a,x)=>a+ +x.amount,0),out=all.filter(x=>x.type=="খরচ").reduce((a,x)=>a+ +x.amount,0);
+  $("sum").innerHTML=`<div class="sum"><div class="mu">মোট পেয়েছি<b class="in">${bn(inn)} ৳</b></div><div class="mu">মোট খরচ<b class="out">${bn(out)} ৳</b></div><div class="mu">হাতে আছে<b>${bn(inn-out)} ৳</b></div></div>`;
+ }
+ if(!rows.length){$("list").innerHTML=`<div class="empty">এখনো কিছু নেই। “নতুন যোগ করুন” চাপুন।</div>`;return}
+ if(tab=="money"){
+  $("list").innerHTML=`<div class="tbl"><table><tr><th>তারিখ</th><th>ধরন</th><th>খাত</th><th>বিবরণ</th><th>টাকা</th><th></th></tr>${rows.map(x=>`<tr><td>${esc(x.date)}</td><td class="${x.type=="পেলাম"?"in":"out"}">${esc(x.type)}</td><td>${esc(x.category)}</td><td>${esc(x.body)}</td><td class="n ${x.type=="পেলাম"?"in":"out"}">${x.type=="পেলাম"?"+":"−"}${bn(x.amount)}</td><td><button class="g" data-e="${x.id}">এডিট</button> <button class="g" data-d="${x.id}">মুছুন</button></td></tr>`).join("")}</table></div>`;return}
+ $("list").innerHTML=`<div class="grid">${rows.map(x=>`<div class="card">${x.image?`<img src="${x.image}" alt="">`:""}<h3>${esc(x.title)}</h3><div class="mu">${[x.semester,x.course,x.topic,x.client,x.tool,x.status,x.date].filter(Boolean).map(esc).join(" | ")}</div>${x.link?`<a class="mu" href="${esc(x.link)}" target="_blank" rel="noopener">${esc(x.link)}</a>`:""}<div class="body">${esc(x.body)}</div><div class="act"><button class="g" data-e="${x.id}">এডিট</button><button class="g" data-d="${x.id}">মুছুন</button></div></div>`).join("")}</div>`;
+}
+function form(item){
+ edit=item?item.id:null;const s=S[tab],v=item||{date:today()};
+ $("frm").innerHTML=`<h3 style="margin:0">${s.t}</h3>`+s.f.map(([k,l,t,o])=>{
+  let c;
+  if(t=="area")c=`<textarea name="${k}" rows="7">${esc(v[k])}</textarea>`;
+  else if(t=="sel")c=`<select name="${k}">${o.map(x=>`<option ${v[k]==x?"selected":""}>${x}</option>`).join("")}</select>`;
+  else if(t=="img")c=`<input type="file" id="img" accept="image/*">${v[k]?'<span class="mu">আগের ছবি থাকবে, নতুন বাছলে বদলাবে</span>':""}`;
+  else c=`<input name="${k}" type="${t=="num"?"number":t=="date"?"date":"text"}" ${t=="num"?'step="any" min="0" required':""} value="${esc(v[k])}">`;
+  return `<label>${l}</label>${c}`}).join("")+`<div class="bar" style="justify-content:flex-end;margin-bottom:0"><button type="button" class="g" id="cx">বাতিল</button><button class="b" id="sv">সেভ করুন</button></div>`;
+ $("dlg").showModal();
+}
+function shrink(file){return new Promise(r=>{const i=new Image();i.onload=()=>{const m=640,k=Math.min(1,m/Math.max(i.width,i.height)),c=document.createElement("canvas");c.width=i.width*k;c.height=i.height*k;c.getContext("2d").drawImage(i,0,0,c.width,c.height);r(c.toDataURL("image/jpeg",.7))};i.src=URL.createObjectURL(file)})}
+document.addEventListener("click",async e=>{
+ const t=e.target;
+ if(t.dataset.t){tab=t.dataset.t;$("q").value="";$("f").value="";render()}
+ if(t.dataset.e)form(D[tab].find(x=>x.id==t.dataset.e));
+ if(t.dataset.d&&confirm("সত্যিই মুছবেন?")){D[tab]=D[tab].filter(x=>x.id!=t.dataset.d);save();render()}
+ if(t.id=="cx")$("dlg").close();
+ if(t.id=="sv"){
+  const fm=$("frm");if(!fm.reportValidity())return;e.preventDefault();
+  const o={};new FormData(fm).forEach((v,k)=>o[k]=v);
+  const old=D[tab].find(x=>x.id==edit);if(old&&old.image)o.image=old.image;
+  const im=$("img");if(im&&im.files[0])o.image=await shrink(im.files[0]);
+  if(old)Object.assign(old,o);else D[tab].push({id:Date.now(),...o});
+  save();$("dlg").close();render();
+ }
+});
+$("add").onclick=()=>form();
+$("q").oninput=render;$("f").onchange=render;
+$("exp").onclick=()=>{const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(D)],{type:"application/json"}));a.download="amar-khata-"+today()+".json";a.click()};
+$("imp").onclick=()=>$("file").click();
+$("file").onchange=async e=>{try{const d=JSON.parse(await e.target.files[0].text());if(confirm("বর্তমান ডাটার জায়গায় ব্যাকআপ বসবে। চালিয়ে যাবেন?")){D=Object.assign({notes:[],writing:[],design:[],money:[]},d);save();render()}}catch(x){alert("ফাইলটি পড়া যায়নি।")}};
+render();
+</script>
+</body>
+</html>
